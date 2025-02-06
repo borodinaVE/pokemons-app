@@ -8,39 +8,66 @@ import { PokemonCard } from "@/components/list/PokemonCard";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Spinner } from "@/components/common/Spinner";
 import { usePokemon } from "@/hooks/usePokemon";
-import { usePokemonsList } from "@/hooks/usePokemonsList";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { getPokemonsList } from "@/api/getPokemons";
+import { Pokemon } from "@/types/pokemon";
+import { getPokemon } from "@/api/getPokemon";
+
+const LIMIT = 20;
 
 export const List = () => {
-  const { fetchPokemons, pokemons, isLoading, error } = usePokemonsList();
-  const { isPokemonLoading, fetchPokemon, pokemon } = usePokemon();
+  const [pokemonToSearch, setPokemonToSearch] = useState<string>("");
 
-  const [showSearchResult, setShowSearchResult] = useState(false);
+  const { data, fetchNextPage, isError, isPending } = useInfiniteQuery({
+    queryKey: ["pokemons"],
+    queryFn: ({ pageParam }) => getPokemonsList(pageParam, LIMIT),
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    initialPageParam: 0,
+  });
+
+  const {
+    isPending: isPokemonLoading,
+    data: pokemon,
+    refetch,
+  } = useQuery({
+    queryKey: ["pokemon", pokemonToSearch],
+    queryFn: () => getPokemon(pokemonToSearch),
+    enabled: true,
+  });
 
   const handleSearchSubmit = (name: string) => {
     if (name) {
-      setShowSearchResult(true);
-      fetchPokemon(name);
+      setPokemonToSearch(name);
+      refetch();
     } else {
-      setShowSearchResult(false);
+      setPokemonToSearch("");
     }
   };
 
   const listData = useMemo(() => {
-    if (showSearchResult) {
+    if (pokemonToSearch) {
       return !isPokemonLoading && pokemon ? [pokemon] : [];
     } else {
-      return pokemons;
+      return data
+        ? data.pages.reduce(
+            (allPokemons: Pokemon[], page) => [
+              ...allPokemons,
+              ...page.pokemons,
+            ],
+            []
+          )
+        : [];
     }
-  }, [pokemons, pokemon, isPokemonLoading, showSearchResult]);
+  }, [data, pokemon, isPokemonLoading]);
 
   const isDataLoading = useMemo(
-    () => isPokemonLoading || isLoading,
-    [isLoading, isPokemonLoading]
+    () => isPokemonLoading || isPending,
+    [isPending, isPokemonLoading]
   );
 
   const handleEndReach = () => {
-    if (!showSearchResult && !isDataLoading) {
-      fetchPokemons();
+    if (!pokemonToSearch && !isDataLoading) {
+      fetchNextPage();
     }
   };
 
@@ -55,11 +82,11 @@ export const List = () => {
         ListHeaderComponent={
           <Header
             handleSearchSubmit={handleSearchSubmit}
-            isSearchSubmited={showSearchResult}
+            isSearchSubmited={!!pokemonToSearch}
           />
         }
       />
-      <Error visible={error} />
+      <Error visible={isError} />
     </SafeAreaView>
   );
 };

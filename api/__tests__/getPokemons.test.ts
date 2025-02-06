@@ -26,7 +26,7 @@ describe('getPokemonsList', () => {
     const pokemonsList = await getPokemonsList(0, 10);
 
     expect(pokemonsList).toEqual(
-      expectedDetailedPokemonResponses.map((p) => mapPokemon(p))
+      {pokemons: expectedDetailedPokemonResponses.map((p) => mapPokemon(p)), nextOffset: 10 }
     );
   });
 });

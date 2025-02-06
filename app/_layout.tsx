@@ -1,17 +1,19 @@
-import 'react-native-reanimated';
+import "react-native-reanimated";
 
-import * as SplashScreen from 'expo-splash-screen';
+import * as SplashScreen from "expo-splash-screen";
 
 import {
   MD3LightTheme as DefaultTheme,
   PaperProvider,
-} from 'react-native-paper';
+} from "react-native-paper";
 
-import { COLORS } from '@/constants/colors';
-import React from 'react';
-import { Stack } from 'expo-router';
-import { useEffect } from 'react';
-import { useFonts } from 'expo-font';
+import { COLORS } from "@/constants/colors";
+import React from "react";
+import { Stack } from "expo-router";
+import { useEffect } from "react";
+import { useFonts } from "expo-font";
+
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,9 +22,11 @@ const theme = {
   colors: COLORS,
 };
 
+const queryClient = new QueryClient();
+
 export default function RootLayout() {
   const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
 
   useEffect(() => {
@@ -32,8 +36,10 @@ export default function RootLayout() {
   }, [loaded]);
 
   return (
-    <PaperProvider theme={theme}>
-      <Stack screenOptions={{ headerShown: false }} />
-    </PaperProvider>
+    <QueryClientProvider client={queryClient}>
+      <PaperProvider theme={theme}>
+        <Stack screenOptions={{ headerShown: false }} />
+      </PaperProvider>
+    </QueryClientProvider>
   );
 }

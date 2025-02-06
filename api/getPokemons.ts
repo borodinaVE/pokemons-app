@@ -15,7 +15,7 @@ export const getPokemonsList = async (offset: number, limit: number) => {
   );
   const detailedPokemonResponses = await Promise.all(detailedPokemonPromises);
 
-  return detailedPokemonResponses.map((detailedPokemonData) => {
+  return {pokemons: detailedPokemonResponses.map((detailedPokemonData) => {
     return mapPokemon(detailedPokemonData.data);
-  });
+  }), nextOffset: offset + limit };
 };
